@@ -13,11 +13,11 @@
 # -Werror=format should _always_ be enabled to catch formatting errors
 # early during compilation rather than at decompression.
 # -DNDEBUG and -O3 are for high performance
-CXXFLAGS= -Werror=format -std=c++17 -DNDEBUG -O3 -g
+CXXFLAGS= -std=c++17 -DNDEBUG -O3 -g 
 
 NANOLOG_RUNTIME_DIR=../runtime
 
-all: sampleApplication decompressor
+all: sampleApplication
 
 # (a) Make the user object files include the NanoLog header (-I)
 %.o: %.cc

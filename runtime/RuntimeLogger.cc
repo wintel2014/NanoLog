@@ -51,7 +51,7 @@ RuntimeLogger::RuntimeLogger()
         , aioCb()
         , compressingBuffer(nullptr)
         , outputDoubleBuffer(nullptr)
-        , currentLogLevel(NOTICE)
+        , currentLogLevel(INFO)
         , cycleAtThreadStart(0)
         , cyclesAtLastAIOStart(0)
         , cyclesActive(0)
@@ -628,9 +628,14 @@ RuntimeLogger::compressionThreadMain() {
     cyclesActive += PerfUtils::Cycles::rdtsc() - cyclesAwakeStart;
 }
 
+const char *
+RuntimeLogger::getLogFile_internal()  const {
+    return logFileName_.c_str();
+}
 // Documentation in NanoLog.h
 void
 RuntimeLogger::setLogFile_internal(const char *filename) {
+    logFileName_ = std::string(filename) + ".txt";
     // Check if it exists and is readable/writeable
     if (access(filename, F_OK) == 0 && access(filename, R_OK | W_OK) != 0) {
         std::string err = "Unable to read/write from new log file: ";
@@ -691,6 +696,11 @@ RuntimeLogger::setLogFile_internal(const char *filename) {
 void
 RuntimeLogger::setLogFile(const char *filename) {
     nanoLogSingleton.setLogFile_internal(filename);
+}
+
+const char *
+RuntimeLogger::getTxtLogFile() {
+    return nanoLogSingleton.getLogFile_internal();
 }
 
 /**

@@ -24,7 +24,7 @@
 #include "NanoLog.h"
 
 // Optional: Import the NanoLog log levels into the current namespace; this
-// allows the log levels (DEBUG, NOTICE, WARNING, ERROR) to be used without
+// allows the log levels (DEBUG, INFO, WARN, ERROR) to be used without
 // using the NanoLog namespace (i.e. NanoLog::DEBUG).
 using namespace NanoLog::LogLevels;
 
@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
 
     // Optional: Set the minimum LogLevel that log messages must have to be
     // persisted. Valid from least to greatest values are
-    // DEBUG, NOTICE, WARNING, ERROR
-    NanoLog::setLogLevel(NOTICE);
+    // DEBUG, INFO, WARN, ERROR
+    NanoLog::setLogLevel(INFO);
 
     NANO_LOG(DEBUG, "This message wont be logged since it is lower "
                         "than the current log level.");
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < RECORDS; ++i) {
-        NANO_LOG(NOTICE, "Simple log message with 0 parameters");
+        NANO_LOG(INFO, "Simple log message with 0 parameters");
     }
     stop = std::chrono::high_resolution_clock::now();
 

@@ -31,10 +31,10 @@ DELAY_CMD=";PerfUtils::Cycles::rdtsc();"
 for UNRELATED_MSGS in $UNRELATED_MSGS_ARRAY
 do
   # Create the log messages
-  BENCH_OP="static int cnt = 0; NANO_LOG(NOTICE, \"${TARGET_MSG}%d\", ++cnt); ${DELAY_CMD}"
+  BENCH_OP="static int cnt = 0; NANO_LOG(INFO, \"${TARGET_MSG}%d\", ++cnt); ${DELAY_CMD}"
   for ((i=0; i < $UNRELATED_MSGS; ++i))
   do
-    BENCH_OP="${BENCH_OP} NANO_LOG(NOTICE, \"${UNRELATED}%d\", ++cnt); ${DELAY_CMD}"
+    BENCH_OP="${BENCH_OP} NANO_LOG(INFO, \"${UNRELATED}%d\", ++cnt); ${DELAY_CMD}"
   done
 
   # Create the file

@@ -13,12 +13,12 @@ THREADS_MAX=4096
 # Even power of 2
 ITTRS=8388608
 declare -A BENCH_OPS
-BENCH_OPS["staticString"]="NANO_LOG(NOTICE, \"Starting backup replica garbage collector thread\");"
-BENCH_OPS["stringConcat"]="NANO_LOG(NOTICE, \"Opened session with coordinator at %s\", \"basic+udp:host=192.168.1.140,port=12246\");"
-BENCH_OPS["singleInteger"]="NANO_LOG(NOTICE, \"Backup storage speeds (min): %d MB/s read\", 181);"
-BENCH_OPS["twoIntegers"]="NANO_LOG(NOTICE, \"buffer has consumed %lu bytes of extra storage, current allocation: %lu bytes\", 1032024, 1016544);"
-BENCH_OPS["singleDouble"]="NANO_LOG(NOTICE, \"Using tombstone ratio balancer with ratio = %0.6lf\", 0.400000);"
-BENCH_OPS["complexFormat"]="NANO_LOG(NOTICE, \"Initialized InfUdDriver buffers: %lu receive buffers (%u MB), %u transmit buffers (%u MB), took %0.1lf ms\", 50000, 97, 50, 0, 26.2);"
+BENCH_OPS["staticString"]="NANO_LOG(INFO, \"Starting backup replica garbage collector thread\");"
+BENCH_OPS["stringConcat"]="NANO_LOG(INFO, \"Opened session with coordinator at %s\", \"basic+udp:host=192.168.1.140,port=12246\");"
+BENCH_OPS["singleInteger"]="NANO_LOG(INFO, \"Backup storage speeds (min): %d MB/s read\", 181);"
+BENCH_OPS["twoIntegers"]="NANO_LOG(INFO, \"buffer has consumed %lu bytes of extra storage, current allocation: %lu bytes\", 1032024, 1016544);"
+BENCH_OPS["singleDouble"]="NANO_LOG(INFO, \"Using tombstone ratio balancer with ratio = %0.6lf\", 0.400000);"
+BENCH_OPS["complexFormat"]="NANO_LOG(INFO, \"Initialized InfUdDriver buffers: %lu receive buffers (%u MB), %u transmit buffers (%u MB), took %0.1lf ms\", 50000, 97, 50, 0, 26.2);"
 
 BENCH_OPS_ORDERING="staticString stringConcat singleInteger twoIntegers singleDouble complexFormat"
 

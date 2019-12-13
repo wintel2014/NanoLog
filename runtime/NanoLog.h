@@ -41,15 +41,15 @@ namespace LogLevels {
          */
                 ERROR,
         /**
-         * Messages at the WARNING level indicate that, although something went
+         * Messages at the WARN level indicate that, although something went
          * wrong or something unexpected happened, it was transient and
          * recoverable.
          */
-                WARNING,
+                WARN,
         /**
-         * Somewhere in between WARNING and DEBUG...
+         * Somewhere in between WARN and DEBUG...
          */
-                NOTICE,
+                INFO,
         /**
          * Messages at the DEBUG level don't necessarily indicate that anything
          * went wrong, but they could be useful in diagnosing problems.

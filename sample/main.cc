@@ -26,14 +26,14 @@
 void runBenchmark();
 
 // Optional: Import the NanoLog log levels into the current namespace; this
-// allows the log levels (DEBUG, NOTICE, WARNING, ERROR) to be used without
+// allows the log levels (DEBUG, INFO, WARN, ERROR) to be used without
 // using the NanoLog namespace (i.e. NanoLog::DEBUG).
 using namespace NanoLog::LogLevels;
 
 int main(int argc, char** argv) {
     // Optional: Set the output location for the NanoLog system. By default
     // the log will be output to ./compressedLog
-    NanoLog::setLogFile("/tmp/logFile");
+    NanoLog::setLogFile("xxx");
 
     // Optional optimization: pre-allocates thread-local data structures
     // needed by NanoLog. This can be invoked once per new
@@ -42,24 +42,29 @@ int main(int argc, char** argv) {
 
     // Optional: Set the minimum LogLevel that log messages must have to be
     // persisted. Valid from least to greatest values are
-    // DEBUG, NOTICE, WARNING, ERROR
-    NanoLog::setLogLevel(NOTICE);
+    // DEBUG, INFO, WARN, ERROR
+    NanoLog::setLogLevel(INFO);
 
-    NANO_LOG(DEBUG, "This message wont be logged since it is lower "
+    NANO_LOG(INFO, "This message wont be logged since it is lower "
                         "than the current log level.");
 
-    NANO_LOG(DEBUG, "Another message.");
+    // NANO_LOG(DEBUG, "Another message.");
 
     // All the standard printf specifiers (except %n) can be used
     char randomString[] = "Hello World";
-    NANO_LOG(NOTICE, "A string, pointer, number, and float: '%s', %p, %d, %f",
-                        randomString,
-                        &randomString,
-                        512,
-                        3.14159);
+    uint64_t aa = 1697420100050000000;
+    uint32_t bb = 123;
+    NANO_LOG(INFO, "A string, pointer, number, "
+                   "and float: %s, %p, %d, %f %lu %u",
+             randomString ? "true" : " false",
+             &randomString,
+             512,
+             3.14159,
+             aa,
+             bb);
 
     // Even with width and length specifiers
-    NANO_LOG(NOTICE, "Shortend String: '%5s' and shortend float %0.2lf",
+    NANO_LOG(INFO, "Shortend String: %5s and shortend float %0.2lf",
                      randomString,
                      3.14159);
 
@@ -85,7 +90,7 @@ void runBenchmark() {
 
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < RECORDS; ++i) {
-        NANO_LOG(NOTICE, "Simple log message with 0 parameters");
+        // NANO_LOG(INFO, "Simple log message with 0 parameters");
     }
     stop = std::chrono::high_resolution_clock::now();
 
