@@ -13,7 +13,9 @@
 # -Werror=format should _always_ be enabled to catch formatting errors
 # early during compilation rather than at decompression.
 # -DNDEBUG and -O3 are for high performance
-CXXFLAGS= -std=c++17 -DNDEBUG -O3 -g 
+CXXFLAGS= -std=c++17 -DNDEBUG -O3 -g  -DENABLE_DEBUG_PRINTING=1 
+CXX=clang++
+# CXX=g++
 
 NANOLOG_RUNTIME_DIR=../runtime
 

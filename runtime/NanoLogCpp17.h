@@ -384,9 +384,10 @@ store_argument(char **storage,
     *storage += sizeof(T);
 
     #ifdef ENABLE_DEBUG_PRINTING
-        printf("\tRBasic  [%p]= ", dest);
-        std::cout << *dest << "\r\n";
-    #endif
+        printf("\tRBasic  [%p]= ", *storage);
+        std::cout << **storage << "\r\n";
+        std::cout << "store_argument non-str arg:" << arg << std::endl        ;
+#endif
 }
 
 // string specialization of the above
@@ -425,11 +426,12 @@ store_argument(char **storage,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 #pragma GCC diagnostic ignored "-Wformat"
-        if (sizeof(typename std::remove_pointer<T>::type) == 1) {
-            printf("\tRString[%p-%u]= %s\r\n", *buffer, size, arg);
-        } else {
-            printf("\tRWString[%p-%u]= %ls\r\n", *buffer, size, arg);
-        }
+    std::cout << "store_argument str arg " << arg << std::endl;
+    if (sizeof(typename std::remove_pointer<T>::type) == 1) {
+        printf("\tRString[%p-%u]= %s\r\n", *storage, stringSize, arg);
+    } else {
+        printf("\tRWString[%p-%u]= %ls\r\n", *storage, stringSize, arg);
+    }
 #pragma GCC diagnostic pop
 #endif
 
@@ -933,11 +935,11 @@ compress(int numNibbles, const ParamType *paramTypes, char **input, char **outpu
     out += (numNibbles + 1)/2;
 
 #ifdef ENABLE_DEBUG_PRINTING
-    printf("\tisArgString [%p] = ", isArgString);
-    for (size_t i = 0; i < sizeof...(Ts); ++i) {
-        printf("%d ", isArgString[i]);
-    }
-    printf("\r\n");
+    // printf("\tisArgString [%p] = ", isArgString);
+    // for (size_t i = 0; i < sizeof...(Ts); ++i) {
+    //     printf("%d ", isArgString[i]);
+    // }
+    // printf("\r\n");
 #endif
 
     // This method of passing in stack-copies of the input/output pointers
@@ -1084,8 +1086,15 @@ typename std::enable_if<!std::is_same<T, const wchar_t*>::value
                         , T>::type
 getArgByIndex(int &argIndexFromRight , int totalSize, const StaticLogInfo&info, std::vector<char *> & printBufAddrVec)
 {
-    argIndexFromRight ++ ;
-    int argIndexFromLeft =(totalSize - argIndexFromRight);  //tricks for args parsed from right most, so we could do this
+    std::cout << "getArgByIndex argIndexFromRight " << argIndexFromRight << " typeT " << typeid(T).name() << std::endl;
+
+    #if defined(__clang__)        
+        int argIndexFromLeft =argIndexFromRight;  //tricks for args parsed from right most, so we could do this
+        argIndexFromRight ++ ;
+    #elif defined(__GNUC__) || defined(__GNUG__)
+        argIndexFromRight++;
+        int argIndexFromLeft =(totalSize - argIndexFromRight);  //tricks for args parsed from right most, so we could do this
+    #endif
 
     if (argIndexFromLeft >= printBufAddrVec.size())
     {
@@ -1110,8 +1119,16 @@ typename std::enable_if<std::is_same<T, wchar_t*>::value
                         , T>::type
 getArgByIndex(int &argIndexFromRight , int totalSize, const StaticLogInfo&info, std::vector<char *> & printBufAddrVec)
 {
-    argIndexFromRight ++ ;
-    int argIndexFromLeft =(totalSize - argIndexFromRight);  //tricks for args parsed from right most, so we could do this
+    std::cout << "getArgByIndex argIndexFromRight " << argIndexFromRight << " typeT " << typeid(T).name() << std::endl;
+
+
+    #if defined(__clang__)    
+        int argIndexFromLeft =argIndexFromRight;  //tricks for args parsed from right most, so we could do this
+        argIndexFromRight ++ ;
+    #elif defined(__GNUC__) || defined(__GNUG__)
+        argIndexFromRight ++ ;
+        int argIndexFromLeft =(totalSize - argIndexFromRight);  //tricks for args parsed from right most, so we could do this
+    #endif
 
 
     return reinterpret_cast<T>(printBufAddrVec[argIndexFromLeft]);
@@ -1298,8 +1315,8 @@ log(int &logId,
     ue->entrySize = downCast<uint32_t>(allocSize);
 
 #ifdef ENABLE_DEBUG_PRINTING
-    printf("\r\nRecording %d:'%s' of size %u\r\n",
-                        logId, info.formatString, ue->entrySize);
+    // printf("\r\nRecording %d:'%s' of size %u\r\n",
+    //                     logId, info.formatString, ue->entrySize);
 #endif
 
     assert(allocSize == downCast<uint32_t>((writePos - originalWritePos)));
