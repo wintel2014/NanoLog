@@ -352,6 +352,7 @@ RuntimeLogger::waitForAIO() {
 */
 void
 RuntimeLogger::compressionThreadMain() {
+
     // Index of the last StagingBuffer checked for uncompressed log messages
     size_t lastStagingBufferChecked = 0;
 

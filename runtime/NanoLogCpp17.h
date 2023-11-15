@@ -1086,7 +1086,7 @@ typename std::enable_if<!std::is_same<T, const wchar_t*>::value
                         , T>::type
 getArgByIndex(int &argIndexFromRight , int totalSize, const StaticLogInfo&info, std::vector<char *> & printBufAddrVec)
 {
-    std::cout << "getArgByIndex argIndexFromRight " << argIndexFromRight << " typeT " << typeid(T).name() << std::endl;
+    // std::cout << "getArgByIndex argIndexFromRight " << argIndexFromRight << " typeT " << typeid(T).name() << std::endl;
 
     #if defined(__clang__)        
         int argIndexFromLeft =argIndexFromRight;  //tricks for args parsed from right most, so we could do this
@@ -1119,7 +1119,7 @@ typename std::enable_if<std::is_same<T, wchar_t*>::value
                         , T>::type
 getArgByIndex(int &argIndexFromRight , int totalSize, const StaticLogInfo&info, std::vector<char *> & printBufAddrVec)
 {
-    std::cout << "getArgByIndex argIndexFromRight " << argIndexFromRight << " typeT " << typeid(T).name() << std::endl;
+    // std::cout << "getArgByIndex argIndexFromRight " << argIndexFromRight << " typeT " << typeid(T).name() << std::endl;
 
 
     #if defined(__clang__)    

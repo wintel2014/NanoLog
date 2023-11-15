@@ -18,7 +18,7 @@ TEST_BUILD_DIR=test_build
 GTEST_DIR="../googletest/googletest"
 INCLUDES=-I. -ItestHelper -I${GTEST_DIR}/include
 LIBS=-L. -lgtest -lrt -pthread
-CXX_ARGS=-std=c++17 -g -O3 -DENABLE_DEBUG_PRINTING=1 
+CXX_ARGS=-std=c++17 -O3 
 #CXX?=g++
 CXX=clang++
 
