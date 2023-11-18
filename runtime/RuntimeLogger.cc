@@ -451,7 +451,7 @@ RuntimeLogger::compressionThreadMain() {
                         long bytesRead = encoder.encodeLogMsgs(
                                 peekPosition + (peekBytes - remaining),
                                 bytesToEncode,
-                                sb->getId(),
+                                (coreId * 100) + sb->getId(),
                                 wrapAround,
                                 shadowStaticInfo,
                                 &logsProcessed);

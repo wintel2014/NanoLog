@@ -46,8 +46,8 @@ PREPROCESSOR_OBJECTS=$(addprefix $(TEST_BUILD_DIR)/, $(OBJECTS))
 
 testHelper/GeneratedCode.cc: testHelper/client.cc
 	$(CXX) $(CXX_ARGS) $(EXTRA_NANOLOG_FLAGS) -E -I. testHelper/client.cc -o testHelper/client.cc.i
-	python ../preprocessor/parser.py --mapOutput="testHelper/client.map" testHelper/client.cc.i
-	python ../preprocessor/parser.py --combinedOutput="testHelper/GeneratedCode.cc" testHelper/client.map
+	python3 ../preprocessor/parser.py --mapOutput="testHelper/client.map" testHelper/client.cc.i
+	python3 ../preprocessor/parser.py --combinedOutput="testHelper/GeneratedCode.cc" testHelper/client.map
 	@rm -f testHelper/client.map testHelper/client.cc.*
 
 test: $(PREPROCESSOR_OBJECTS) $(TEST_OBJS) $(GENERATED_OBJ) libgtest.a
