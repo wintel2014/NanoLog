@@ -73,14 +73,14 @@ RuntimeLogger::RuntimeLogger()
         stagingBufferPeekDist[i] = 0;
 
     const char *filename = NanoLogConfig::DEFAULT_LOG_FILE;
-    outputFd = open(filename, NanoLogConfig::FILE_PARAMS, 0666);
-    if (outputFd < 0) {
-        fprintf(stderr, "NanoLog could not open the default file location "
-                "for the log file (\"%s\").\r\n Please check the permissions "
-                "or use NanoLog::setLogFile(const char* filename) to "
-                "specify a different log file.\r\n", filename);
-        std::exit(-1);
-    }
+    // outputFd = open(filename, NanoLogConfig::FILE_PARAMS, 0666);
+    // if (outputFd < 0) {
+    //     fprintf(stderr, "NanoLog could not open the default file location "
+    //             "for the log file (\"%s\").\r\n Please check the permissions "
+    //             "or use NanoLog::setLogFile(const char* filename) to "
+    //             "specify a different log file.\r\n", filename);
+    //     std::exit(-1);
+    // }
 
     memset(&aioCb, 0, sizeof(aioCb));
 
@@ -130,10 +130,10 @@ RuntimeLogger::~RuntimeLogger() {
         outputDoubleBuffer = nullptr;
     }
 
-    if (outputFd > 0)
-        close(outputFd);
+    // if (outputFd > 0)
+    //     close(outputFd);
 
-    outputFd = 0;
+    // outputFd = 0;
 }
 
 // Documentation in NanoLog.h
@@ -143,7 +143,7 @@ RuntimeLogger::getStats() {
     char buffer[1024];
     // Leaks abstraction, but basically flush so we get all the time
     uint64_t start = PerfUtils::Cycles::rdtsc();
-    fdatasync(nanoLogSingleton.outputFd);
+    // fdatasync(nanoLogSingleton.outputFd);
     uint64_t stop = PerfUtils::Cycles::rdtsc();
     nanoLogSingleton.cyclesDiskIO_upperBound += (stop - start);
 
@@ -318,7 +318,9 @@ RuntimeLogger::preallocate() {
 */
 void
 RuntimeLogger::waitForAIO() {
-    if (hasOutstandingOperation) {
+    return;
+    if (hasOutstandingOperation)
+    {
         if (aio_error(&aioCb) == EINPROGRESS) {
             const struct aiocb *const aiocb_list[] = {&aioCb};
             int err = aio_suspend(aiocb_list, 1, NULL);
@@ -607,16 +609,16 @@ RuntimeLogger::compressionThreadMain() {
             }
         }
 
-        aioCb.aio_fildes = outputFd;
-        aioCb.aio_buf = compressingBuffer;
-        aioCb.aio_nbytes = bytesToWrite;
+        // aioCb.aio_fildes = outputFd;
+        // aioCb.aio_buf = compressingBuffer;
+        // aioCb.aio_nbytes = bytesToWrite;
         totalBytesWritten += bytesToWrite;
 
         cyclesAtLastAIOStart = PerfUtils::Cycles::rdtsc();
-        if (aio_write(&aioCb) == -1)
-            fprintf(stderr, "Error at aio_write(): %s\n", strerror(errno));
+        // if (aio_write(&aioCb) == -1)
+        //     fprintf(stderr, "Error at aio_write(): %s\n", strerror(errno));
 
-        hasOutstandingOperation = true;
+        hasOutstandingOperation = false;
 
         // Swap buffers
         encoder.swapBuffer(outputDoubleBuffer,
@@ -644,15 +646,15 @@ RuntimeLogger::setLogFile_internal(const char *filename) {
         throw std::ios_base::failure(err);
     }
 
-    // Try to open the file
-    int newFd = open(filename, NanoLogConfig::FILE_PARAMS, 0666);
-    if (newFd < 0) {
-        std::string err = "Unable to open file new log file: '";
-        err.append(filename);
-        err.append("': ");
-        err.append(strerror(errno));
-        throw std::ios_base::failure(err);
-    }
+    // // Try to open the file
+    // int newFd = open(filename, NanoLogConfig::FILE_PARAMS, 0666);
+    // if (newFd < 0) {
+    //     std::string err = "Unable to open file new log file: '";
+    //     err.append(filename);
+    //     err.append("': ");
+    //     err.append(strerror(errno));
+    //     throw std::ios_base::failure(err);
+    // }
 
     // Everything seems okay, stop the background thread and change files
     sync();
@@ -667,9 +669,9 @@ RuntimeLogger::setLogFile_internal(const char *filename) {
     if (compressionThread.joinable())
         compressionThread.join();
 
-    if (outputFd > 0)
-        close(outputFd);
-    outputFd = newFd;
+    // if (outputFd > 0)
+    //     close(outputFd);
+    // outputFd = newFd;
 
     // Relaunch thread
     nextInvocationIndexToBePersisted = 0; // Reset the dictionary
