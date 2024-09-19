@@ -1,0 +1,32 @@
+{
+    "editor.minimap.enabled": false,
+    "editor.defaultFormatter": "rust-lang.rust",
+    "editor.formatOnSave": false,
+    "go.toolsManagement.autoUpdate": true,
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": false,
+    },
+
+    "[go]": {
+        "editor.defaultFormatter": "golang.go",
+        "editor.formatOnSave": false,
+    },
+    "files.associations": {
+        "*.sol": "solidity",
+        "*.cc": "cpp",
+        "array": "cpp"
+    },
+    "[solidity]": {
+        "editor.defaultFormatter": "JuanBlanco.solidity"
+    },
+    "cmake.configureOnOpen": true,
+
+    "C_Cpp.clang_format_fallbackStyle": "{Standard: Cpp11, BasedOnStyle: Microsoft, IndentWidth: 4, ColumnLimit: 0}",
+    "C_Cpp.clang_format_sortIncludes": false,
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": false,
+    }
+}

@@ -272,21 +272,21 @@ TEST_F(LogTest, insertCheckpoint) {
     Checkpoint *ck = reinterpret_cast<Checkpoint*>(backing_buffer);
 
     // out of space
-    EXPECT_FALSE(insertCheckpoint(&writePos, backing_buffer, false));
+    EXPECT_FALSE(insertCheckpoint(&writePos, backing_buffer, false,nullptr));
     EXPECT_EQ(writePos, backing_buffer);
 
-    EXPECT_FALSE(insertCheckpoint(&writePos, backing_buffer, true));
+    EXPECT_FALSE(insertCheckpoint(&writePos, backing_buffer, true,nullptr));
     EXPECT_EQ(writePos, backing_buffer);
 
     // Not out of space
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false,nullptr));
     EXPECT_EQ(sizeof(Checkpoint), writePos - backing_buffer);
     EXPECT_EQ(0U, ck->newMetadataBytes);
     EXPECT_EQ(0U, ck->totalMetadataEntries);
 
 
     writePos = backing_buffer;
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, true));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, true,nullptr));
     ck = reinterpret_cast<Checkpoint*>(backing_buffer);
     EXPECT_EQ(sizeof(Checkpoint) + ck->newMetadataBytes,
               writePos - backing_buffer);
@@ -294,10 +294,10 @@ TEST_F(LogTest, insertCheckpoint) {
 
     // Out of space at the very end
     writePos = endOfBuffer - sizeof(Checkpoint) - 1;
-    EXPECT_FALSE(insertCheckpoint(&writePos, endOfBuffer, true));
+    EXPECT_FALSE(insertCheckpoint(&writePos, endOfBuffer, true,nullptr));
 
     writePos = endOfBuffer - sizeof(Checkpoint) - 1;
-    EXPECT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false));
+    EXPECT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false,nullptr));
 }
 
 TEST_F(LogTest, insertCheckpoint_end2end) {
@@ -317,9 +317,9 @@ TEST_F(LogTest, insertCheckpoint_end2end) {
     ASSERT_NE(nullptr, in);
     ASSERT_FALSE(readCheckpoint(cp1, in));
 
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false));
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, true));
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false,nullptr));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, true,nullptr));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false,nullptr));
 
     // Write the buffer to a file and read it back
     fclose(in);
@@ -366,9 +366,9 @@ TEST_F(LogTest, encodeNewDictionaryEntries) {
     std::vector<StaticLogInfo> meta;
 
     NanoLogInternal::ParamType paramTypes[10];
-    meta.emplace_back(nullptr, "File", 123, 0, "Hello World", 0, 0, paramTypes);
-    meta.emplace_back(nullptr, "FileA", 99, 2, "Hello World %s", 0, 0, paramTypes);
-    meta.emplace_back(nullptr, "FileC", 125, 3, "Hello World %%d", 0, 0, paramTypes);
+    meta.emplace_back(nullptr,nullptr, "File", 123, 0, "Hello World", 0, 0, paramTypes);
+    meta.emplace_back(nullptr,nullptr, "FileA", 99, 2, "Hello World %s", 0, 0, paramTypes);
+    meta.emplace_back(nullptr,nullptr, "FileC", 125, 3, "Hello World %%d", 0, 0, paramTypes);
 
     // Not enough space, even for a dictionary fragment
     Encoder noSpaceEncoder(buffer, 1, true);
@@ -420,7 +420,7 @@ TEST_F(LogTest, encodeNewDictionaryEntries) {
     EXPECT_EQ(buffer + expectedSize, readPos);
 
     // Now let's add another entry to make sure it makes it in okay
-    meta.emplace_back(nullptr, "BLALKSD", 125, 3, "H %%d", 0, 0, paramTypes);
+    meta.emplace_back(nullptr,nullptr, "BLALKSD", 125, 3, "H %%d", 0, 0, paramTypes);
     expectedSize = sizeof(DictionaryFragment)
                     + sizeof(CompressedLogInfo)
                     + strlen(meta[3].filename) + 1
@@ -454,7 +454,7 @@ TEST_F(LogTest, encodeNewDictionaryEntries) {
     // One last entry, but this time we'll run out of space after encoding
     // the dictionary fragment header
     encoder.endOfBuffer = encoder.writePos + sizeof(DictionaryFragment) + 1;
-    meta.emplace_back(nullptr, "BLALKSD", 125, 3, "H %%d", 0, 0, paramTypes);
+    meta.emplace_back(nullptr,nullptr, "BLALKSD", 125, 3, "H %%d", 0, 0, paramTypes);
     EXPECT_EQ(sizeof(DictionaryFragment),
                 encoder.encodeNewDictionaryEntries(currentPos, meta));
 
@@ -862,7 +862,7 @@ TEST_F(LogTest, decoder_insertCheckpoint) {
     uint32_t numEntries = GeneratedFunctions::numLogIds;
 
     // True Case
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, true));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, true,nullptr));
     Checkpoint *ck = reinterpret_cast<Checkpoint*>(backing_buffer);
 
     EXPECT_EQ(Log::EntryType::CHECKPOINT, ck->entryType);
@@ -875,7 +875,7 @@ TEST_F(LogTest, decoder_insertCheckpoint) {
 
     // False Case
     writePos = backing_buffer;
-    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false));
+    ASSERT_TRUE(insertCheckpoint(&writePos, endOfBuffer, false,nullptr));
     EXPECT_EQ(Log::EntryType::CHECKPOINT, ck->entryType);
     EXPECT_LT(startCycles, ck->rdtsc);
     EXPECT_GT(PerfUtils::Cycles::rdtsc(), ck->rdtsc);
@@ -887,16 +887,16 @@ TEST_F(LogTest, decoder_insertCheckpoint) {
     // Out of space case
     char *newEndOfSpace = backing_buffer + metadataBytes;
     writePos = backing_buffer;
-    ASSERT_FALSE(insertCheckpoint(&writePos, newEndOfSpace, true));
+    ASSERT_FALSE(insertCheckpoint(&writePos, newEndOfSpace, true,nullptr));
     EXPECT_EQ(backing_buffer, writePos);
 
     writePos = backing_buffer;
-    ASSERT_TRUE(insertCheckpoint(&writePos, newEndOfSpace, false));
+    ASSERT_TRUE(insertCheckpoint(&writePos, newEndOfSpace, false,nullptr));
     EXPECT_EQ(backing_buffer + sizeof(Checkpoint), writePos);
 
     writePos = backing_buffer;
     newEndOfSpace = backing_buffer + sizeof(Checkpoint) - 1;
-    ASSERT_FALSE(insertCheckpoint(&writePos, newEndOfSpace, false));
+    ASSERT_FALSE(insertCheckpoint(&writePos, newEndOfSpace, false,nullptr));
     EXPECT_EQ(backing_buffer, writePos);
 }
 
@@ -911,7 +911,7 @@ TEST_F(LogTest, decoder_readDictionary) {
     uint32_t fmOffset, fm2Offset;
 
     // The true case is tested in integration tests
-    insertCheckpoint(&writePos, endOfBuffer, false);
+    insertCheckpoint(&writePos, endOfBuffer, false,nullptr);
     Checkpoint *ck = reinterpret_cast<Checkpoint*>(backing_buffer);
 
     // Basic Log that's from asdfasdfasdf:1234 -> "abab %*.*lfabab"
@@ -1682,18 +1682,18 @@ TEST_F(LogTest, Decoder_internalDecompress_end2end) {
     EXPECT_FALSE(iFile.eof());
     iFile.close();
 
-    EXPECT_STREQ(iLines[0].c_str(),  "00:01.000000090 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[1].c_str(),  "00:01.000000105 testHelper/client.cc:21 NOTICE[5]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[2].c_str(),  "00:01.000000093 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[3].c_str(),  "00:01.000000096 testHelper/client.cc:21 NOTICE[10]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[4].c_str(),  "00:01.000000100 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[5].c_str(),  "00:01.000000111 testHelper/client.cc:21 NOTICE[10]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[6].c_str(),  "00:01.000000145 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[7].c_str(),  "00:01.000000156 testHelper/client.cc:21 NOTICE[5]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[8].c_str(),  "00:01.000000118 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[9].c_str(),  "00:01.000000091 testHelper/client.cc:20 NOTICE[11]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[10].c_str(), "00:01.000000135 testHelper/client.cc:20 NOTICE[12]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[11].c_str(), "00:01.000000126 testHelper/client.cc:20 NOTICE[7]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[0].c_str(),  "00:01.000000090 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[1].c_str(),  "00:01.000000105 testHelper/client.cc:21 INFO[5]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[2].c_str(),  "00:01.000000093 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[3].c_str(),  "00:01.000000096 testHelper/client.cc:21 INFO[10]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[4].c_str(),  "00:01.000000100 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[5].c_str(),  "00:01.000000111 testHelper/client.cc:21 INFO[10]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[6].c_str(),  "00:01.000000145 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[7].c_str(),  "00:01.000000156 testHelper/client.cc:21 INFO[5]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[8].c_str(),  "00:01.000000118 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[9].c_str(),  "00:01.000000091 testHelper/client.cc:20 INFO[11]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[10].c_str(), "00:01.000000135 testHelper/client.cc:20 INFO[12]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[11].c_str(), "00:01.000000126 testHelper/client.cc:20 INFO[7]: Simple log message with 0 parameters\r");
 
     // try iterative interface
     LogMessage msg;
@@ -1718,18 +1718,18 @@ TEST_F(LogTest, Decoder_internalDecompress_end2end) {
         iLines.push_back(iLine.c_str() + 14); // +14 to skip date and hour
     }
 
-    EXPECT_STREQ(iLines[0].c_str(),  "00:01.000000090 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[1].c_str(),  "00:01.000000105 testHelper/client.cc:21 NOTICE[5]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[2].c_str(),  "00:01.000000093 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[3].c_str(),  "00:01.000000096 testHelper/client.cc:21 NOTICE[10]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[4].c_str(),  "00:01.000000100 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[5].c_str(),  "00:01.000000111 testHelper/client.cc:21 NOTICE[10]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[6].c_str(),  "00:01.000000145 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[7].c_str(),  "00:01.000000156 testHelper/client.cc:21 NOTICE[5]: This is a string aaaaaaaaaaaaaaa\r");
-    EXPECT_STREQ(iLines[8].c_str(),  "00:01.000000118 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[9].c_str(),  "00:01.000000091 testHelper/client.cc:20 NOTICE[11]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[10].c_str(), "00:01.000000135 testHelper/client.cc:20 NOTICE[12]: Simple log message with 0 parameters\r");
-    EXPECT_STREQ(iLines[11].c_str(), "00:01.000000126 testHelper/client.cc:20 NOTICE[7]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[0].c_str(),  "00:01.000000090 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[1].c_str(),  "00:01.000000105 testHelper/client.cc:21 INFO[5]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[2].c_str(),  "00:01.000000093 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[3].c_str(),  "00:01.000000096 testHelper/client.cc:21 INFO[10]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[4].c_str(),  "00:01.000000100 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[5].c_str(),  "00:01.000000111 testHelper/client.cc:21 INFO[10]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[6].c_str(),  "00:01.000000145 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[7].c_str(),  "00:01.000000156 testHelper/client.cc:21 INFO[5]: This is a string aaaaaaaaaaaaaaa\r");
+    EXPECT_STREQ(iLines[8].c_str(),  "00:01.000000118 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[9].c_str(),  "00:01.000000091 testHelper/client.cc:20 INFO[11]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[10].c_str(), "00:01.000000135 testHelper/client.cc:20 INFO[12]: Simple log message with 0 parameters\r");
+    EXPECT_STREQ(iLines[11].c_str(), "00:01.000000126 testHelper/client.cc:20 INFO[7]: Simple log message with 0 parameters\r");
 
     EXPECT_FALSE(iFile.eof());
     iFile.close();
@@ -1746,18 +1746,18 @@ TEST_F(LogTest, Decoder_internalDecompress_end2end) {
     fclose(outputFd);
 
     const char* orderedLines[] = {
-        "1969-12-31 16:00:01.000000090 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000091 testHelper/client.cc:20 NOTICE[11]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000093 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000096 testHelper/client.cc:21 NOTICE[10]: This is a string aaaaaaaaaaaaaaa\r",
-        "1969-12-31 16:00:01.000000100 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000105 testHelper/client.cc:21 NOTICE[5]: This is a string aaaaaaaaaaaaaaa\r",
-        "1969-12-31 16:00:01.000000111 testHelper/client.cc:21 NOTICE[10]: This is a string aaaaaaaaaaaaaaa\r",
-        "1969-12-31 16:00:01.000000118 testHelper/client.cc:20 NOTICE[10]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000126 testHelper/client.cc:20 NOTICE[7]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000135 testHelper/client.cc:20 NOTICE[12]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000145 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000156 testHelper/client.cc:21 NOTICE[5]: This is a string aaaaaaaaaaaaaaa\r"
+        "1969-12-31 16:00:01.000000090 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000091 testHelper/client.cc:20 INFO[11]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000093 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000096 testHelper/client.cc:21 INFO[10]: This is a string aaaaaaaaaaaaaaa\r",
+        "1969-12-31 16:00:01.000000100 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000105 testHelper/client.cc:21 INFO[5]: This is a string aaaaaaaaaaaaaaa\r",
+        "1969-12-31 16:00:01.000000111 testHelper/client.cc:21 INFO[10]: This is a string aaaaaaaaaaaaaaa\r",
+        "1969-12-31 16:00:01.000000118 testHelper/client.cc:20 INFO[10]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000126 testHelper/client.cc:20 INFO[7]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000135 testHelper/client.cc:20 INFO[12]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000145 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000156 testHelper/client.cc:21 INFO[5]: This is a string aaaaaaaaaaaaaaa\r"
     };
 
     std::string iLine;
@@ -1857,20 +1857,20 @@ TEST_F(LogTest, Decoder_internalDecompress_fileBreaks) {
     ASSERT_TRUE(iFile.good());
 
     const char* expectedLines[] = {
-        "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000002 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000003 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000004 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000002 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000003 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000004 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
         "\r",
         "# New execution started\r",
         "\r",
         "# New execution started\r",
-        "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000002 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000003 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-        "1969-12-31 16:00:01.000000004 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r"
+        "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000002 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000003 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+        "1969-12-31 16:00:01.000000004 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r"
     };
 
     std::string iLine;
@@ -2005,14 +2005,14 @@ TEST_F(LogTest, Decoder_internalDecompress_fileBreaks2) {
 
     // Now let's attempt to parse it back and read the output
     const char* expectedLines[] = {
-            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-            "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
-            "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 NOTICE[5]: Simple log message with 0 parameters\r",
+            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+            "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
+            "1969-12-31 16:00:01.000000001 testHelper/client.cc:20 INFO[5]: Simple log message with 0 parameters\r",
             "\r",
             "# New execution started\r",
-            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 NOTICE[1]: Simple log message with 0 parameters\r"
+            "1969-12-31 16:00:01.000000000 testHelper/client.cc:20 INFO[1]: Simple log message with 0 parameters\r"
     };
 
     // Try the ordered case
@@ -2093,7 +2093,7 @@ TEST_F(LogTest, Decoder_decompressNextLogStatement_timeTravel) {
     ASSERT_TRUE(iFile.good());
 
     const char* expectedLines[] = {
-        "1969-12-31 16:00:20.000000001 testHelper/client.cc:20 NOTICE[1]: Simple log message with 0 parameters\r"
+        "1969-12-31 16:00:20.000000001 testHelper/client.cc:20 INFO[1]: Simple log message with 0 parameters\r"
     };
 
     std::string iLine;
@@ -2243,12 +2243,12 @@ TEST_F(LogTest, Decoder_getNextLogStatement) {
     FILE *outputFd;
 
     const char* expectedLines[] = {
-            "1969-12-31 16:00:01.000000010 testHelper/client.cc:28 NOTICE[1]: I have an integer 1\r",
-            "1969-12-31 16:00:01.000000020 testHelper/client.cc:28 NOTICE[1]: I have an integer -2\r",
-            "1969-12-31 16:00:01.000000030 testHelper/client.cc:29 NOTICE[1]: I have a uint64_t 3\r",
-            "1969-12-31 16:00:01.000000040 testHelper/client.cc:30 NOTICE[1]: I have a double 4.000000\r",
-            "1969-12-31 16:00:01.000000050 testHelper/client.cc:31 NOTICE[1]: I have a couple of things 5, 6.000000, 7, eight point oh\r",
-            "1969-12-31 16:00:01.000000060 testHelper/client.cc:30 NOTICE[1]: I have a double 9.000000\r"
+            "1969-12-31 16:00:01.000000010 testHelper/client.cc:28 INFO[1]: I have an integer 1\r",
+            "1969-12-31 16:00:01.000000020 testHelper/client.cc:28 INFO[1]: I have an integer -2\r",
+            "1969-12-31 16:00:01.000000030 testHelper/client.cc:29 INFO[1]: I have a uint64_t 3\r",
+            "1969-12-31 16:00:01.000000040 testHelper/client.cc:30 INFO[1]: I have a double 4.000000\r",
+            "1969-12-31 16:00:01.000000050 testHelper/client.cc:31 INFO[1]: I have a couple of things 5, 6.000000, 7, eight point oh\r",
+            "1969-12-31 16:00:01.000000060 testHelper/client.cc:30 INFO[1]: I have a double 9.000000\r"
     };
 
     LogMessage logMsg;
@@ -2576,6 +2576,26 @@ compressHelper1(int numNibbles, const ParamType*, char **in, char**out)
     ++compressHelper1TimesRun;
 }
 
+//added by wezhu
+static int dumpHelper0TimesRun = 0;
+static int dumpHelper1TimesRun = 0;
+
+static void
+dumpDirectHelper0(FILE *, const StaticLogInfo&, Log::UncompressedEntry*,uint32_t, const Log::Checkpoint &, char **, int32_t &)
+{
+    ++dumpHelper0TimesRun;
+}
+
+static void
+dumpDirectHelper1(FILE *, const StaticLogInfo&, Log::UncompressedEntry*,uint32_t, const Log::Checkpoint &, char **, int32_t &)
+{
+    ++dumpHelper1TimesRun;
+}
+
+
+
+
+//end of adding
 template<typename T>
 static T*
 push(char* (&in)) {
@@ -2596,8 +2616,8 @@ TEST_F(LogTest, encodeLogMsgs_cpp17) {
     uint64_t numEventsCompressed = 0;
     std::vector<StaticLogInfo> dictionary;
     NanoLogInternal::ParamType paramTypes[10];
-    dictionary.emplace_back(&compressHelper0, "File", 123, 0, "Hello World", 0, 0, paramTypes);
-    dictionary.emplace_back(&compressHelper1, "FileA", 99, 2, "Hello World %s", 0, 0, paramTypes);
+    dictionary.emplace_back(&compressHelper0,dumpDirectHelper0, "File", 123, 0, "Hello World", 0, 0, paramTypes);
+    dictionary.emplace_back(&compressHelper1,dumpDirectHelper1, "FileA", 99, 2, "Hello World %s", 0, 0, paramTypes);
 
     // Case 1: early break because we haven't persisted the dictionary entries
     UncompressedEntry *ue = push<UncompressedEntry>(in);

@@ -24,6 +24,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <string>
 
 #include "Config.h"
 #include "Common.h"
@@ -62,9 +63,9 @@ using namespace NanoLog;
 
 #ifdef ENABLE_DEBUG_PRINTING
             printf("Registered '%s' as id=%d\r\n", info.formatString, logId);
-            printf("\tisParamString [%p] = ", info.isArgString);
+            printf("\tisParamString [%p] = ", info.paramTypes);
             for (int i = 0; i < info.numParams; ++i)
-                printf("%d ", info.isArgString[i]);
+                printf("%d ", info.paramTypes[i]);
             printf("\r\n");
 #endif
         }
@@ -126,6 +127,7 @@ using namespace NanoLog;
         static std::string getHistograms();
         static void preallocate();
         static void setLogFile(const char *filename);
+        static const char *getTxtLogFile();
         static void setLogLevel(LogLevel logLevel);
         static void sync();
 
@@ -160,6 +162,8 @@ using namespace NanoLog;
         void compressionThreadMain();
 
         void setLogFile_internal(const char *filename);
+
+        const char * getLogFile_internal() const;
 
         void waitForAIO();
 
@@ -303,6 +307,8 @@ using namespace NanoLog;
         // Indicates the index of the next invocationSite that needs to be
         // persisted to disk.
         uint32_t nextInvocationIndexToBePersisted;
+
+        std::string logFileName_;
 
         /**
          * Implements a circular FIFO producer/consumer byte queue that is used

@@ -202,7 +202,7 @@ def main(argv):
     releaseThreshExp  = 19
     pollInterval      = 1
     iterations        = 100000000
-    benchOp           = "NANO_LOG(NOTICE, \"Simple log message with 0 parameters\");"
+    benchOp           = "NANO_LOG(INFO, \"Simple log message with 0 parameters\");"
     threads           = 1
     extraDefines      = ""
 
@@ -247,7 +247,7 @@ def main(argv):
       oFile.write(libraryConfigTemplate)
       print """
 ***********
-* WARNING *
+* WARN *
 ***********
       """
       print "\"../runtime/Config.h\" has been modified to support " \

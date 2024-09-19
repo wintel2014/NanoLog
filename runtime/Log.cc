@@ -18,18 +18,18 @@
 #include <bits/algorithmfwd.h>
 #include <regex>
 #include <vector>
-
+#include <fstream>
 #include "Log.h"
 #include "GeneratedCode.h"
-
+#include "RuntimeLogger.h"
 namespace NanoLogInternal {
 
 /**
   * Friendly names for each #LogLevel value.
   * Keep this in sync with the LogLevel enum in NanoLog.h.
   */
-static const char* logLevelNames[] = {"(none)", "ERROR", "WARNING",
-                                       "NOTICE", "DEBUG"};
+static const char* logLevelNames[] = {"(none)", "error", "warning",
+                                       "info", "debug"};
 
 /**
  * Insert a checkpoint into an output buffer. This operation is fairly
@@ -44,7 +44,7 @@ static const char* logLevelNames[] = {"(none)", "ERROR", "WARNING",
  *      True if operation succeed, false if there's not enough space
  */
 bool
-Log::insertCheckpoint(char **out, char *outLimit, bool writeDictionary) {
+Log::insertCheckpoint(char **out, char *outLimit, bool writeDictionary, Checkpoint *retCheckPoint) {
     if (static_cast<uint64_t>(outLimit - *out) < sizeof(Checkpoint))
         return false;
 
@@ -56,6 +56,15 @@ Log::insertCheckpoint(char **out, char *outLimit, bool writeDictionary) {
     ck->unixTime = std::time(nullptr);
     ck->cyclesPerSecond = PerfUtils::Cycles::getCyclesPerSec();
     ck->newMetadataBytes = ck->totalMetadataEntries = 0;
+
+    //adding by wezhu
+    if(retCheckPoint != nullptr)
+    {
+        *retCheckPoint = *ck;
+    }
+    //end of adding
+
+
 
     if (!writeDictionary)
         return true;
@@ -75,8 +84,17 @@ Log::insertCheckpoint(char **out, char *outLimit, bool writeDictionary) {
             GeneratedFunctions::numLogIds);
 #endif // PREPROCESSOR_NANOLOG
 
+
+
+
+
+
     return true;
 }
+
+
+
+
 /**
  * Encoder constructor. The construction of an Encoder should logically
  * correlate with the start of a new log file as it will embed unique metadata
@@ -102,12 +120,17 @@ Log::Encoder::Encoder(char *buffer,
     , currentExtentSize(nullptr)
     , encodeMissDueToMetadata(0)
     , consecutiveEncodeMissesDueToMetadata(0)
+    ,fileHandler(fopen(RuntimeLogger::getTxtLogFile(),"a"))
 {
-    assert(buffer);
+    
+     //adding by wezhu
+     printfBuf = (char *)malloc(printfBufSize);
+     printf("Nano::txt type log is %s\n",RuntimeLogger::getTxtLogFile());
+     // end
 
-    // Start the buffer off with a checkpoint
-    if (skipCheckpoint && !forceDictionaryOutput)
-        return;
+     // Start the buffer off with a checkpoint
+     if (skipCheckpoint && !forceDictionaryOutput)
+         return;
 
 #ifdef PREPROCESSOR_NANOLOG
     bool writeDictionary = true;
@@ -117,12 +140,13 @@ Log::Encoder::Encoder(char *buffer,
 
     // In virtually all cases, our output buffer should have enough
     // space to store the dictionary. If not, we fail in place.
-    if (!insertCheckpoint(&writePos, endOfBuffer, writeDictionary)) {
+    if (!insertCheckpoint(&writePos, endOfBuffer, writeDictionary, &checkPointForDumpTxtLog)) {
         fprintf(stderr, "Internal Error: Not enough space allocated for "
                         "dictionary file.\r\n");
 
         exit(-1);
     }
+
 }
 
 /**
@@ -380,8 +404,15 @@ Log::Encoder::encodeLogMsgs(char *from,
                 info.formatString, entry->fmtId);
 #endif
         char *argData = entry->argData;
+        //adding by wezhu
+        info.dumpDirectFunction(fileHandler, info ,entry,bufferId, checkPointForDumpTxtLog,&printfBuf, printfBufSize);
+        //end of adding
+
         info.compressionFunction(info.numNibbles, info.paramTypes,
                                         &argData, &writePos);
+
+
+
 
         remaining -= entry->entrySize;
         from += entry->entrySize;
@@ -1364,6 +1395,11 @@ Log::Decoder::BufferFragment::decompressNextLogStatement(FILE *outputFd,
         std::time_t absTime = wholeSeconds + checkpoint.unixTime;
         std::tm *tm = localtime(&absTime);
         strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S", tm);
+
+
+
+
+        
     }
 
 #ifdef PREPROCESSOR_NANOLOG
@@ -1406,18 +1442,16 @@ Log::Decoder::BufferFragment::decompressNextLogStatement(FILE *outputFd,
         auto *metadata = reinterpret_cast<FormatMetadata*>(
                                             fmtId2metadata.at(nextLogId));
 
-        const char *filename = metadata->filename;
+        // const char *filename = metadata->filename;
         const char *logLevel = logLevelNames[metadata->logLevel];
 
         logArgs.reset(metadata, nextLogId, nextLogTimestamp);
 
         // Output the context
         if (outputFd) {
-            fprintf(outputFd,"%s.%09.0lf %s:%u %s[%u]: "
+            fprintf(outputFd,"[%s.%09.0lf][%s][t %u] "
                     , timeString
                     , nanos
-                    , filename
-                    , metadata->lineNumber
                     , logLevel
                     , runtimeId);
         }

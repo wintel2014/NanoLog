@@ -102,12 +102,12 @@ using namespace NanoLog::LogLevels;
 
 int main() 
 {
-  NANO_LOG(NOTICE, "Hello World! This is an integer %d and a double %lf\r\n", 1, 2.0);
+  NANO_LOG(INFO, "Hello World! This is an integer %d and a double %lf\r\n", 1, 2.0);
   return 0;
 }
 ```
 
-Valid log levels are DEBUG, NOTICE, WARNING, and ERROR and the logging level can be set via ```NanoLog::setLogLevel(...)```
+Valid log levels are DEBUG, INFO, WARN, and ERROR and the logging level can be set via ```NanoLog::setLogLevel(...)```
 
 The rest of the NanoLog API is documented in the [NanoLog.h](./runtime/NanoLog.h) header file.
 
@@ -152,3 +152,6 @@ make test
 ./test --gtest_filter=-*assert*
 ```
 Note: The gtest filter is used to removed tests with assert death statements in them.
+1. Txt format logs
+  For hft won't have too many logs and real-time checking by human is a requirement, I add the feature for dumping txt-format logs directly .
+  The log's name is "xx.log" at the run directory.

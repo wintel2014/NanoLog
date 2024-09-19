@@ -47,7 +47,7 @@ using namespace NanoLog::LogLevels;
 static void
 hiddenInHeaderFilePrint()
 {
-    NANO_LOG(NOTICE,
+    NANO_LOG(INFO,
       "Messages in the Header"
         " File"
         );

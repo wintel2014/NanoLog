@@ -18,10 +18,12 @@ TEST_BUILD_DIR=test_build
 GTEST_DIR="../googletest/googletest"
 INCLUDES=-I. -ItestHelper -I${GTEST_DIR}/include
 LIBS=-L. -lgtest -lrt -pthread
-CXX_ARGS=-std=c++17 -g -O3
-CXX?=g++
+CXX_ARGS=-std=c++17 -g -O3 -DENABLE_DEBUG_PRINTING=1 
+#CXX?=g++
+CXX=clang++
 
-all: decompressor libNanoLog.a
+
+all: libNanoLog.a
 
 %.o: %.cc
 	$(CXX) $(CXX_ARGS) $(EXTRA_NANOLOG_FLAGS) $(INCLUDES) -c $< -o $@

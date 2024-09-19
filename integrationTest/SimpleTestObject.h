@@ -42,7 +42,7 @@ public:
     void wholeBunchOfLogStatements();
     inline void logStatementsInHeader() {
         /// These should be assigned different ids due to line number
-        NANO_LOG(NOTICE, "In the header, I am %d", number);
-        NANO_LOG(NOTICE, "In the header, I am %d x2", number);
+        NANO_LOG(INFO, "In the header, I am %d", number);
+        NANO_LOG(INFO, "In the header, I am %d x2", number);
     }
 };
